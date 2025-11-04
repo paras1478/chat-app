@@ -1,0 +1,19 @@
+{
+  "name": "@repo/db",
+  "version": "1.0.0",
+  "main": "dist/Client.js",
+  "types": "dist/Client.d.ts",
+  "exports": {
+    "./Client": "./dist/Client.js"
+  },
+  "scripts": {
+    "build": "prisma generate && tsc -b"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.18.0",
+    "prisma": "^6.18.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*"
+  }
+}
