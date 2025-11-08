@@ -1,44 +1,56 @@
-import { initDraw } from "draw";
-import { useEffect, useRef, useState } from "react";
-import { Canvas } from "./canvas";
+"use client";
 
-const WS_URL = "ws://localhost:3001";
+import { useEffect, useRef, useState } from "react";
+import { Toolbar } from "./Toolbar";
 
 export function RoomCanvas({ roomId }: { roomId: string }) {
-  const [socket, setSocket] = useState<WebSocket | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [tool, setTool] = useState("pen");
 
   useEffect(() => {
-    const ws = new WebSocket(`${WS_URL}?roomId=${roomId}`);
+    if (!canvasRef.current) return;
 
-    ws.onopen = () => {
-      console.log("WebSocket connected");
-      setSocket(ws);
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d")!;
+    let drawing = false;
+
+    const onMouseDown = (e: MouseEvent) => {
+      drawing = true;
+      ctx.beginPath();
+      ctx.moveTo(e.offsetX, e.offsetY);
     };
 
-    ws.onerror = (err) => {
-      console.error("WebSocket error:", err);
+    const onMouseMove = (e: MouseEvent) => {
+      if (!drawing) return;
+      if (tool === "pen") {
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.stroke();
+      }
     };
 
-    ws.onclose = () => {
-      console.log("WebSocket disconnected");
+    const onMouseUp = () => (drawing = false);
+
+    canvas.addEventListener("mousedown", onMouseDown);
+    canvas.addEventListener("mousemove", onMouseMove);
+    canvas.addEventListener("mouseup", onMouseUp);
+
+    return () => {
+      canvas.removeEventListener("mousedown", onMouseDown);
+      canvas.removeEventListener("mousemove", onMouseMove);
+      canvas.removeEventListener("mouseup", onMouseUp);
     };
-
-    return () => ws.close();
-  }, [roomId]);
-
-  useEffect(() => {
-    if (socket && canvasRef.current) {
-      initDraw(canvasRef.current);
-    }
-  }, [socket]);
-
-  if (!socket) return <div>Connecting to server…</div>;
+  }, [tool]);
 
   return (
-    <div>
-  
-      
+    <div className="w-screen h-screen">
+      <Toolbar onSelectTool={setTool} />
+
+      <canvas
+        ref={canvasRef}
+        width={1200}
+        height={700}
+        className="border w-full h-full"
+      />
     </div>
   );
 }
